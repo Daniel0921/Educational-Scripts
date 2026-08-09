@@ -1,4 +1,6 @@
 Excel Guide: Using TEXTBEFORE, TEXTAFTER, and TRIM to Split and Clean Data
+________________________________________________________________________________________________________________________________________________________________________________________________________
+
 Introduction
 When working with exported reports, raw datasets, or manually entered records in Excel, information is often stored in a single cell instead of being separated into proper columns.
 For example:
@@ -262,7 +264,7 @@ The combination of:
 •	TEXTBEFORE() 
 •	TEXTAFTER() 
 •	TRIM() 
-is one of the fastest and most effective ways to transform messy text data into structured analytical datasets in Excel.
+It is one of the fastest and most effective ways to transform messy text data into structured analytical datasets in Excel.
 These functions are foundational tools for:
 •	Analysts 
 •	Business intelligence teams 
