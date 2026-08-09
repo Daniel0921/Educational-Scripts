@@ -1,0 +1,82 @@
+import numpy as np
+
+# -----------------------------
+# 1. Input time series
+# -----------------------------
+y = np.array([
+    3.64973815, 2.99549717, 2.56877414, 2.9468194,
+    3.63628318, 2.20029144, 3.58499797, 2.30541867,
+    2.44001707, 1.91864557, 2.33640267, 0.71044036,
+    1.25885197, 1.175712,   1.82684075, 1.090066,
+    1.73614439, 1.84846206, 2.72661025, 3.56022295,
+    3.59882147, 5.28710702, 6.03863768, 6.76454015,
+    7.82283933, 8.07749541, 9.15639392, 9.62977085,
+    10.6195424, 11.56870074, 11.60384656, 12.13092488,
+    12.30468568, 12.41261552, 12.53969402, 12.75664092
+], dtype=float)
+
+# -----------------------------
+# 2. Basic settings
+# -----------------------------
+T = len(y)
+L = 6
+
+print("T =", T)
+
+# -----------------------------
+# 3. Build page matrix P(y, L)
+#    Shape = (L, T/L)
+# -----------------------------
+num_cols = T // L
+P = y.reshape(num_cols, L).T
+
+print("\nPage matrix P(y,6):")
+print(P)
+
+# -----------------------------
+# 4. Sum of first row
+# -----------------------------
+first_row_sum = P[0, :].sum()
+print("\nSum of first row of P(y,6) =", first_row_sum)
+
+# -----------------------------
+# 5. SVD
+#    P = U Sigma V^T
+# -----------------------------
+U, s, Vt = np.linalg.svd(P, full_matrices=True)
+
+print("\nSingular values:")
+for i, val in enumerate(s, start=1):
+    print(f"s{i} = {val:.8f}")
+
+# -----------------------------
+# 6. Find smallest r such that
+#    cumulative energy >= 90%
+# -----------------------------
+energy = s**2
+energy_ratio = np.cumsum(energy) / np.sum(energy)
+r = np.searchsorted(energy_ratio, 0.9) + 1
+
+print("\nEnergy ratios:")
+for i, ratio in enumerate(energy_ratio, start=1):
+    print(f"Using first {i} singular values: {ratio:.8f}")
+
+print("\nr =", r)
+
+# -----------------------------
+# 7. Build rank-r approximation
+# -----------------------------
+Sigma_r = np.zeros_like(P, dtype=float)
+for i in range(r):
+    Sigma_r[i, i] = s[i]
+
+P_hat = U @ Sigma_r @ Vt
+
+print("\nRank-r approximation P_hat:")
+print(P_hat)
+
+# -----------------------------
+# 8. Sum of first row of P_hat
+# -----------------------------
+first_row_sum_hat = P_hat[0, :].sum()
+print("\nSum of first row of P_hat =", first_row_sum_hat)
