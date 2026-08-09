@@ -1,11 +1,13 @@
 Example 1 — Python Automation Script for AWS / Operational Reporting
+
+
 Business Context
-This type of script reflects the kind of workflow used for automated reporting pipelines like the Celsius reporting process.
+This type of script reflects the kind of workflow used for automated reporting pipelines.
 The purpose:
 •	read a shipment export 
 •	validate the data 
 •	generate a reporting file 
-•	prepare it for cloud delivery / automation 
+•	prepare it for cloud delivery/automation 
 ________________________________________
 Python Script
 import pandas as pd
@@ -57,6 +59,8 @@ Operational analytics
 AWS-style workflow automation
 ________________________________________
 Example 2 — Python GroupBy Analysis Similar to Pivot Table Logic
+
+
 Business Context
 This script demonstrates using pandas to replicate Excel Pivot Table aggregation logic inside Python.
 The purpose:
