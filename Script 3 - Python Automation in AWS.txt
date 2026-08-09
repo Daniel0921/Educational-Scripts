@@ -1,0 +1,108 @@
+Example 1 — Python Automation Script for AWS / Operational Reporting
+Business Context
+This type of script reflects the kind of workflow used for automated reporting pipelines like the Celsius reporting process.
+The purpose:
+•	read a shipment export 
+•	validate the data 
+•	generate a reporting file 
+•	prepare it for cloud delivery / automation 
+________________________________________
+Python Script
+import pandas as pd
+from datetime import datetime
+import os
+
+# Read shipment export
+df = pd.read_csv("shipments.csv")
+
+# Validate dataset is not empty
+if df.empty:
+    print("ERROR: Shipment export is empty")
+    exit()
+
+# Create timestamp
+timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+
+# Generate output filename
+output_file = f"shipment_report_{timestamp}.csv"
+
+# Create KPI summary
+summary = (
+    df.groupby("Customer Name")
+      .agg({
+          "Shipment Number": "count",
+          "Revenue": "sum"
+      })
+      .rename(columns={
+          "Shipment Number": "Total Shipments",
+          "Revenue": "Total Revenue"
+      })
+)
+
+# Export processed report
+summary.to_csv(output_file)
+
+print(f"Report generated: {output_file}")
+________________________________________
+Interview Explanation
+“This script simulates an automated operational reporting workflow. It ingests shipment exports, validates the dataset, aggregates KPIs using group-by logic, generates a timestamped reporting output, and prepares the file for downstream automation processes such as AWS-hosted delivery pipelines or SFTP transfers.”
+________________________________________
+Skills Demonstrated
+Python ETL processing
+Data validation
+KPI aggregation
+Automated reporting
+Timestamp-based file generation
+Operational analytics
+AWS-style workflow automation
+________________________________________
+Example 2 — Python GroupBy Analysis Similar to Pivot Table Logic
+Business Context
+This script demonstrates using pandas to replicate Excel Pivot Table aggregation logic inside Python.
+The purpose:
+•	summarize operational KPIs 
+•	group shipment performance 
+•	analyze customer-level metrics 
+________________________________________
+Python Script
+import pandas as pd
+
+# Read shipment data
+df = pd.read_csv("shipments.csv")
+
+# Create shipment performance column
+df["Shipment Performance"] = df["Days Late"].apply(
+    lambda x: "Late" if x > 0 else "On Time"
+)
+
+# Group similar to a Pivot Table
+pivot_summary = (
+    df.groupby(
+        ["Customer Name", "Shipment Performance"]
+    )
+    .agg({
+        "Shipment Number": "count",
+        "Revenue": "sum",
+        "Days Late": "mean"
+    })
+    .rename(columns={
+        "Shipment Number": "Shipment Count",
+        "Revenue": "Total Revenue",
+        "Days Late": "Average Days Late"
+    })
+)
+
+# Display summary
+print(pivot_summary)
+________________________________________
+Interview Explanation
+“This script uses pandas group-by aggregation to replicate Pivot Table-style KPI summarization within Python. It groups shipment performance metrics by customer and operational status, then aggregates shipment counts, revenue totals, and average delay metrics into a structured analytical reporting view.”
+________________________________________
+Skills Demonstrated
+pandas groupby logic
+Pivot Table replication in Python
+KPI aggregation
+Operational analytics
+Business-rule classification
+Analytical reporting
+Data transformation

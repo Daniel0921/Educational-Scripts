@@ -1,0 +1,273 @@
+Excel Guide: Using TEXTBEFORE, TEXTAFTER, and TRIM to Split and Clean Data
+Introduction
+When working with exported reports, raw datasets, or manually entered records in Excel, information is often stored in a single cell instead of being separated into proper columns.
+For example:
+Raichu = Pikachu + Thunder Stone
+While this is readable to humans, it is not ideal for:
+•	Filtering 
+•	Sorting 
+•	PivotTables 
+•	Power Query 
+•	Database imports 
+•	Data analysis 
+The goal is to transform this:
+Raw Data
+Raichu = Pikachu + Thunder Stone
+Into this structured format:
+Evolution	Evolves From	Function
+Raichu	Pikachu	Thunder Stone
+This guide will explain:
+1.	What TEXTBEFORE() does 
+2.	What TEXTAFTER() does 
+3.	Why TRIM() is important 
+4.	How these functions work together 
+5.	How to apply them to real-world datasets 
+________________________________________
+Understanding the Structure of the Data
+Original text:
+Raichu = Pikachu + Thunder Stone
+There are two separators:
+•	= separates the evolution from the source Pokémon 
+•	+ separates the source Pokémon from the evolution method 
+We can think of the string like this:
+[Evolution] = [Pokemon] + [Function]
+Excel’s text functions allow us to extract each section automatically.
+________________________________________
+Section 1 — TEXTBEFORE()
+Purpose
+TEXTBEFORE() extracts everything before a specified character or word.
+________________________________________
+Syntax
+TEXTBEFORE(text, delimiter)
+Parameters
+Parameter	Meaning
+text	The cell containing the text
+delimiter	The character or word to stop at
+________________________________________
+Example 1 — Extracting the Evolution Name
+Suppose cell A1 contains:
+Raichu = Pikachu + Thunder Stone
+Formula:
+=TEXTBEFORE(A1,"=")
+Result:
+Raichu
+________________________________________
+What Happened?
+Excel scanned the text from left to right and stopped when it encountered:
+=
+Everything before that symbol was returned.
+________________________________________
+Visual Breakdown
+Raichu = Pikachu + Thunder Stone
+^^^^^^
+Returned by TEXTBEFORE
+________________________________________
+Why This Is Useful
+TEXTBEFORE() is extremely useful for:
+•	Splitting IDs from descriptions 
+•	Extracting first names 
+•	Pulling categories from coded fields 
+•	Cleaning imported CSV exports 
+•	Separating metadata from values 
+________________________________________
+Section 2 — TEXTAFTER()
+Purpose
+TEXTAFTER() extracts everything after a specified character or word.
+________________________________________
+Syntax
+TEXTAFTER(text, delimiter)
+________________________________________
+Example 2 — Extracting Everything After "="
+Formula:
+=TEXTAFTER(A1,"=")
+Result:
+ Pikachu + Thunder Stone
+Notice something important:
+There is a leading space before “Pikachu”.
+This is where TRIM() becomes critical.
+________________________________________
+Section 3 — TRIM()
+Purpose
+TRIM() removes unnecessary spaces from text.
+This includes:
+•	Leading spaces 
+•	Trailing spaces 
+•	Extra spaces between words 
+________________________________________
+Syntax
+TRIM(text)
+________________________________________
+Example 3 — Cleaning Spaces
+Formula:
+=TRIM(TEXTAFTER(A1,"="))
+Result:
+Pikachu + Thunder Stone
+________________________________________
+Visual Breakdown
+Before TRIM:
+[space]Pikachu + Thunder Stone
+After TRIM:
+Pikachu + Thunder Stone
+________________________________________
+Why TRIM Is Extremely Important
+Raw datasets often contain:
+•	Hidden spaces 
+•	Accidental spacing 
+•	Inconsistent formatting 
+•	Extra whitespace from exports 
+Without TRIM():
+•	Lookups may fail 
+•	Joins may fail 
+•	PivotTables may duplicate categories 
+•	Filters may behave incorrectly 
+Example:
+"Pikachu"
+is NOT equal to:
+" Pikachu"
+even though they look similar visually.
+________________________________________
+Section 4 — Combining Functions Together
+Now we combine multiple functions to isolate specific parts of the string.
+________________________________________
+Goal
+Extract:
+Desired Output	Formula Goal
+Raichu	Before "="
+Pikachu	Between "=" and "+"
+Thunder Stone	After "+"
+________________________________________
+Formula 1 — Evolution Name
+=TRIM(TEXTBEFORE(A1,"="))
+Result:
+Raichu
+________________________________________
+Formula 2 — Pokémon It Evolves From
+This is slightly more advanced because the value is located BETWEEN two delimiters.
+We first:
+1.	Grab everything after "=" 
+2.	Then take everything before "+" 
+Formula:
+=TRIM(TEXTBEFORE(TEXTAFTER(A1,"="),"+"))
+________________________________________
+Step-by-Step Breakdown
+Starting value:
+Raichu = Pikachu + Thunder Stone
+________________________________________
+Step 1 — TEXTAFTER
+TEXTAFTER(A1,"=")
+Result:
+ Pikachu + Thunder Stone
+________________________________________
+Step 2 — TEXTBEFORE
+TEXTBEFORE(TEXTAFTER(A1,"="),"+")
+Result:
+ Pikachu
+________________________________________
+Step 3 — TRIM
+TRIM(TEXTBEFORE(TEXTAFTER(A1,"="),"+"))
+Final result:
+Pikachu
+________________________________________
+Formula 3 — Evolution Function
+Formula:
+=TRIM(TEXTAFTER(A1,"+"))
+Result:
+Thunder Stone
+________________________________________
+Final Formula Set
+Column	Formula
+Evolution	=TRIM(TEXTBEFORE(A1,"="))
+Evolves From	=TRIM(TEXTBEFORE(TEXTAFTER(A1,"="),"+"))
+Function	=TRIM(TEXTAFTER(A1,"+"))
+________________________________________
+Full Example Table
+A	B	C	D
+Raw Data	Evolution	Evolves From	Function
+Raichu = Pikachu + Thunder Stone	Raichu	Pikachu	Thunder Stone
+Flareon = Eevee + Fire Stone	Flareon	Eevee	Fire Stone
+Jolteon = Eevee + Thunder Stone	Jolteon	Eevee	Thunder Stone
+________________________________________
+Why These Functions Matter in Real Data Analytics
+These functions are heavily used in:
+•	Data cleaning 
+•	ETL pipelines 
+•	Report automation 
+•	SQL staging preparation 
+•	Power Query preprocessing 
+•	CSV normalization 
+•	API response cleanup 
+________________________________________
+Real-World Business Examples
+Example 1 — Shipment Data
+Raw field:
+Boston MA -> Portland ME | Carrier: FedEx
+Possible extraction:
+•	Origin 
+•	Destination 
+•	Carrier 
+________________________________________
+Example 2 — Product Codes
+Raw field:
+SKU-4432 | Electronics | Active
+Possible extraction:
+•	SKU 
+•	Category 
+•	Status 
+________________________________________
+Example 3 — Financial Reports
+Raw field:
+Revenue = 45000 + Adjustment
+Possible extraction:
+•	Metric 
+•	Base value 
+•	Adjustment type 
+________________________________________
+Important Notes
+TEXTBEFORE/TEXTAFTER Availability
+These functions are available in:
+•	Excel 365 
+•	Excel 2021+ 
+Older Excel versions may require:
+•	LEFT() 
+•	RIGHT() 
+•	MID() 
+•	FIND() 
+________________________________________
+Common Mistakes
+1. Forgetting TRIM()
+Without TRIM:
+•	Lookups fail 
+•	Joins fail 
+•	Duplicate categories appear 
+________________________________________
+2. Incorrect Delimiters
+This:
+=TEXTBEFORE(A1,"+")
+is different from:
+=TEXTBEFORE(A1," + ")
+Spacing matters.
+________________________________________
+Best Practice Recommendation
+Use:
+•	TRIM() 
+•	Structured formulas 
+•	Separate helper columns 
+This creates:
+•	Cleaner datasets 
+•	Easier debugging 
+•	Better downstream reporting 
+________________________________________
+Final Takeaway
+The combination of:
+•	TEXTBEFORE() 
+•	TEXTAFTER() 
+•	TRIM() 
+is one of the fastest and most effective ways to transform messy text data into structured analytical datasets in Excel.
+These functions are foundational tools for:
+•	Analysts 
+•	Business intelligence teams 
+•	Reporting specialists 
+•	SQL developers 
+•	ETL engineers 
+•	Operations analysts 
+Mastering them significantly improves your ability to clean and organize real-world business data efficiently.
