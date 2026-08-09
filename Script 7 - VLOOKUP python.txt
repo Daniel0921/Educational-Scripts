@@ -1,0 +1,98 @@
+import pandas as pd
+
+# ============================================================
+# VLOOKUP EQUIVALENT USING PANDAS MERGE
+# ============================================================
+
+# File paths
+input_file = "20260803-Excel Test - Pivot Table - LookUp -IndexMatch.xlsx"
+output_file = "Excel_Test_VLOOKUP_Completed.xlsx"
+
+
+# ============================================================
+# STEP 1: LOAD THE EXCEL SHEETS
+# ============================================================
+
+# Load the ACTIVE CLIENTS worksheet
+active_clients = pd.read_excel(
+    input_file,
+    sheet_name="ACTIVE CLIENTS"
+)
+
+# Load the lookup worksheet
+client_identifiers = pd.read_excel(
+    input_file,
+    sheet_name="Clients w ACCS Identifier"
+)
+
+
+# ============================================================
+# STEP 2: SELECT THE LOOKUP DATA
+# ============================================================
+
+# We only need:
+#   Client ID
+#   Identifier Notes
+#
+# Client ID is the matching/key field.
+# Identifier Notes is the value we want to return.
+
+lookup_table = client_identifiers[
+    ["Client ID", "Identifier Notes"]
+].copy()
+
+
+# ============================================================
+# STEP 3: PERFORM THE LOOKUP
+# ============================================================
+
+# A pandas merge is similar to VLOOKUP.
+#
+# how="left" means:
+# Keep every record from ACTIVE CLIENTS,
+# even if there is no matching Client ID
+# in the lookup table.
+
+result = active_clients.merge(
+    lookup_table,
+    on="Client ID",
+    how="left"
+)
+
+
+# ============================================================
+# STEP 4: RENAME THE RETURNED COLUMN
+# ============================================================
+
+result.rename(
+    columns={
+        "Identifier Notes": "ACCS Program Name (Vlookup)"
+    },
+    inplace=True
+)
+
+
+# ============================================================
+# STEP 5: REPLACE MISSING VALUES WITH BLANKS
+# ============================================================
+
+# Similar to using IFERROR(...,"") in Excel.
+
+result["ACCS Program Name (Vlookup)"] = (
+    result["ACCS Program Name (Vlookup)"]
+    .fillna("")
+)
+
+
+# ============================================================
+# STEP 6: SAVE RESULTS
+# ============================================================
+
+result.to_excel(
+    output_file,
+    sheet_name="ACTIVE CLIENTS",
+    index=False
+)
+
+print("VLOOKUP equivalent completed.")
+print(f"Output saved to: {output_file}")

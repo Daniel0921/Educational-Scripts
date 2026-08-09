@@ -1,0 +1,91 @@
+import pandas as pd
+
+# ============================================================
+# PIVOT TABLE SCRIPT
+# ============================================================
+
+input_file = "Excel_Test_VLOOKUP_Completed.xlsx"
+output_file = "Excel_Test_Pivot_Table.xlsx"
+
+
+# ============================================================
+# STEP 1: LOAD THE COMPLETED ACTIVE CLIENTS DATA
+# ============================================================
+
+df = pd.read_excel(
+    input_file,
+    sheet_name="ACTIVE CLIENTS"
+)
+
+
+# ============================================================
+# STEP 2: CLEAN THE DATA
+# ============================================================
+
+# Remove records where the ACCS Program Name is blank.
+#
+# This prevents a "(blank)" category from appearing
+# in the PivotTable.
+
+df = df[
+    df["ACCS Program Name (Vlookup)"].notna()
+]
+
+df = df[
+    df["ACCS Program Name (Vlookup)"] != ""
+]
+
+
+# ============================================================
+# STEP 3: BUILD THE PIVOT TABLE
+# ============================================================
+
+pivot = pd.pivot_table(
+    df,
+
+    # Equivalent to Excel ROWS
+    index="ACCS Program Name (Vlookup)",
+
+    # Equivalent to Excel COLUMNS
+    columns="Program/Site",
+
+    # Equivalent to Excel VALUES
+    values="Client ID",
+
+    # Count Client IDs
+    aggfunc="count",
+
+    # Replace empty combinations with zero
+    fill_value=0,
+
+    # Add Grand Total row and column
+    margins=True,
+
+    # Name the Grand Total
+    margins_name="Grand Total"
+)
+
+
+# ============================================================
+# STEP 4: CLEAN THE PIVOT OUTPUT
+# ============================================================
+
+# Convert the index back into a normal column.
+#
+# This makes the Excel output easier to work with.
+
+pivot = pivot.reset_index()
+
+
+# ============================================================
+# STEP 5: SAVE THE PIVOT TABLE
+# ============================================================
+
+pivot.to_excel(
+    output_file,
+    sheet_name="Pivot Table",
+    index=False
+)
+
+print("PivotTable completed.")
+print(f"Output saved to: {output_file}")

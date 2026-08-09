@@ -1,0 +1,95 @@
+import pandas as pd
+
+# ============================================================
+# INDEX/MATCH EQUIVALENT USING PANDAS MAP
+# ============================================================
+
+# File paths
+input_file = "20260803-Excel Test - Pivot Table - LookUp -IndexMatch.xlsx"
+output_file = "Excel_Test_INDEX_MATCH_Completed.xlsx"
+
+
+# ============================================================
+# STEP 1: LOAD DATA
+# ============================================================
+
+active_clients = pd.read_excel(
+    input_file,
+    sheet_name="ACTIVE CLIENTS"
+)
+
+client_identifiers = pd.read_excel(
+    input_file,
+    sheet_name="Clients w ACCS Identifier"
+)
+
+
+# ============================================================
+# STEP 2: CREATE THE LOOKUP STRUCTURE
+# ============================================================
+
+# Set Client ID as the index.
+#
+# This creates a relationship like:
+#
+# Client ID  ->  Identifier Notes
+#
+# Example:
+#
+# 2120 -> ACCS Res - Perkins Place Res
+
+lookup_map = (
+    client_identifiers
+    .drop_duplicates(subset="Client ID")
+    .set_index("Client ID")["Identifier Notes"]
+)
+
+
+# ============================================================
+# STEP 3: LOOK UP EACH CLIENT ID
+# ============================================================
+
+# .map() searches each Client ID in ACTIVE CLIENTS
+# against our lookup structure.
+#
+# This is conceptually similar to:
+#
+# MATCH:
+# Find where the Client ID exists.
+#
+# INDEX:
+# Return Identifier Notes from that record.
+
+active_clients["ACCS Program Name (Index-Match)"] = (
+    active_clients["Client ID"].map(lookup_map)
+)
+
+
+# ============================================================
+# STEP 4: HANDLE MISSING CLIENT IDs
+# ============================================================
+
+# Python represents unmatched values as NaN.
+#
+# fillna("") is similar to Excel:
+#
+# IFERROR(...,"")
+
+active_clients["ACCS Program Name (Index-Match)"] = (
+    active_clients["ACCS Program Name (Index-Match)"]
+    .fillna("")
+)
+
+
+# ============================================================
+# STEP 5: SAVE RESULTS
+# ============================================================
+
+active_clients.to_excel(
+    output_file,
+    sheet_name="ACTIVE CLIENTS",
+    index=False
+)
+
+print("INDEX/MATCH equivalent completed.")
+print(f"Output saved to: {output_file}")
