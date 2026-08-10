@@ -31,18 +31,23 @@ If you can simulate the uncertain process, then by repeating that simulation man
 **Why It Works (Brief Math)**
 
 • Law of Large Numbers: the average of many simulations converges to the true expected value.
+
 • Central Limit Theorem: the sampling distribution of the mean is approximately normal; the mean’s standard error is roughly sd/√N, enabling confidence intervals.
 
 **When Monte Carlo is Useful**
 
 • Closed-form math is messy (tiered penalties, different p_i or fees per load, correlated lateness).
+
 • Scenario testing (change p, fees, policies and re‑simulate).
+
 • Need the whole distribution, not just a single number (e.g., P(total < $12.5k)).
 
 **Limitations / Caveats**
 
 • Results are only as good as the model (garbage in, garbage out).
+
 • Always approximate; sampling error shrinks as trials increase.
+
 • Rare events may need many trials or variance‑reduction techniques to estimate accurately.
 
 ---
