@@ -14,11 +14,11 @@ The goal is to demonstrate the analytical method without disclosing proprietary 
 
 What is Monte Carlo?
 
-Monte Carlo (MC) is a simulation method that uses random sampling to estimate numerical quantities—like expected values, probabilities, or full distributions—especially when exact math is difficult or when you want to stress‑test assumptions.
+> Monte Carlo (MC) is a simulation method that uses random sampling to estimate numerical quantities—like expected values, probabilities, or full distributions—especially when exact math is difficult or when you want to stress‑test assumptions.
 
 The Idea (One Sentence)
 
-If you can simulate the uncertain process, then by repeating that simulation many times and averaging, you can estimate the quantity you care about.
+> If you can simulate the uncertain process, then by repeating that simulation many times and averaging, you can estimate the quantity you care about.
 
 How It Works
 
@@ -29,7 +29,6 @@ How It Works
 5) Summarize the results: mean (expected value), standard deviation (volatility), confidence intervals.
 
 Why It Works (Brief Math)
-
 • Law of Large Numbers: the average of many simulations converges to the true expected value.
 • Central Limit Theorem: the sampling distribution of the mean is approximately normal; the mean’s standard error is roughly sd/√N, enabling confidence intervals.
 
