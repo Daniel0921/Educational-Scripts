@@ -12,15 +12,15 @@ The goal is to demonstrate the analytical method without disclosing proprietary 
 
 ## What is Monte Carlo?
 
-What is Monte Carlo?
+**What is Monte Carlo?**
 
 Monte Carlo (MC) is a simulation method that uses random sampling to estimate numerical quantities—like expected values, probabilities, or full distributions—especially when exact math is difficult or when you want to stress‑test assumptions.
 
-*The Idea (One Sentence)*
+**The Idea (One Sentence)**
 
 If you can simulate the uncertain process, then by repeating that simulation many times and averaging, you can estimate the quantity you care about.
 
-How It Works
+**How It Works**
 
 1) Specify a model for uncertainty (e.g., each load is late with probability p).
 2) Simulate one outcome by drawing random values (e.g., mark which loads are late).
@@ -28,16 +28,19 @@ How It Works
 4) Repeat steps 2–3 many times (hundreds to millions).
 5) Summarize the results: mean (expected value), standard deviation (volatility), confidence intervals.
 
-Why It Works (Brief Math)
+**Why It Works (Brief Math)**
+
 • Law of Large Numbers: the average of many simulations converges to the true expected value.
 • Central Limit Theorem: the sampling distribution of the mean is approximately normal; the mean’s standard error is roughly sd/√N, enabling confidence intervals.
 
-When Monte Carlo is Useful
+**When Monte Carlo is Useful**
+
 • Closed-form math is messy (tiered penalties, different p_i or fees per load, correlated lateness).
 • Scenario testing (change p, fees, policies and re‑simulate).
 • Need the whole distribution, not just a single number (e.g., P(total < $12.5k)).
 
-Limitations / Caveats
+**Limitations / Caveats**
+
 • Results are only as good as the model (garbage in, garbage out).
 • Always approximate; sampling error shrinks as trials increase.
 • Rare events may need many trials or variance‑reduction techniques to estimate accurately.
