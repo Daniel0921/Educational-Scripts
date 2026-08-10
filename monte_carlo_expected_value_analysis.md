@@ -484,15 +484,6 @@ Stress-test assumptions
       ↓
 Support decisions
 ```
-
----
-
-## Repository Note
-
-All company names, customer identifiers, operational lanes, and business-sensitive values from the original internal analysis have been removed.
-
-The numerical examples in this public version are **synthetic** and are included solely to demonstrate analytical methodology.
-
 ---
 
 ## Technologies
