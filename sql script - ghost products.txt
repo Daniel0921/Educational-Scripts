@@ -1,0 +1,292 @@
+/*==============================================================================
+PROJECT: Inventory Record Validation using Multi-Stage CTEs
+
+PURPOSE
+-------
+Operational warehouse data contained duplicate and stale inventory records that
+could not be trusted on their own.
+
+To determine which records represented the true inventory state, this query
+compares transaction history against a verified reference dataset (originally
+maintained outside of the transactional system).
+
+The overall workflow is:
+
+1. Filter the operational data down to only the records relevant to the
+   investigation.
+2. Load the verified reference records.
+3. Reconstruct the history of every Receipt + Item + Pallet combination.
+4. Detect duplicate warehouse locations and stale historical records.
+5. Compare operational data against the verified reference.
+6. Classify every record as VALID, GHOST, or REVIEW.
+
+This approach separates business logic into multiple CTEs so that each stage
+can be validated independently.
+==============================================================================*/
+
+
+/*==============================================================================
+STEP 1
+Load only the operational records that matter.
+
+Instead of scanning the entire warehouse database, this CTE narrows the dataset
+using business rules.
+
+Filters include:
+    • Selected warehouse facilities
+    • One customer
+    • Relevant product families
+    • Relevant warehouse process types
+
+Keeping this filtering isolated makes the remainder of the query much easier
+to understand and improves performance.
+==============================================================================*/
+WITH SourceData AS (
+
+    SELECT
+
+        h.FACILITY_CODE,
+        h.RECEIPT_NUMBER,
+        h.REFERENCE_NUMBER,
+
+        d.ITEM_CODE,
+        d.PALLET_ID,
+        d.PROCESS_CODE,
+        d.QUANTITY,
+
+        /* Build one standardized timestamp regardless of which source column
+           contains the newest activity. */
+        COALESCE(
+            d.UPDATED_AT,
+            d.CREATED_AT,
+            h.RECEIPT_DATE
+        ) AS ACTIVITY_DATE
+
+    FROM RECEIPT_HEADER h
+
+    INNER JOIN RECEIPT_DETAIL d
+
+        ON h.FACILITY_CODE = d.FACILITY_CODE
+       AND h.RECEIPT_NUMBER = d.RECEIPT_NUMBER
+
+    WHERE h.FACILITY_CODE IN
+    (
+        'WH1',
+        'WH2',
+        'WH3',
+        'WH4'
+    )
+
+    AND h.CUSTOMER_CODE = 'TARGET_CUSTOMER'
+
+    AND
+    (
+        d.ITEM_CODE LIKE 'FG%'
+        OR
+        d.ITEM_CODE LIKE 'PM%'
+    )
+
+    AND d.PROCESS_CODE IN
+    (
+        'RECEIVE',
+        'TRANSFER',
+        'PUTAWAY',
+        'ADJUSTMENT'
+    )
+
+),
+
+
+
+/*==============================================================================
+STEP 2
+Load the verified reference records.
+
+This dataset acts as the "dictionary of truth."
+
+Rather than assuming every operational record is correct, each receipt,
+product, pallet, and warehouse combination is checked against this verified
+reference before being considered valid.
+==============================================================================*/
+VerifiedRecords AS (
+
+    SELECT DISTINCT
+
+        RECEIPT_NUMBER,
+        ITEM_CODE,
+        PALLET_ID,
+        FACILITY_CODE
+
+    FROM VERIFIED_INBOUND_DICTIONARY
+
+),
+
+
+
+/*==============================================================================
+STEP 3
+Reconstruct inventory movement history.
+
+Window functions allow us to analyze every Receipt + Item + Pallet group
+without collapsing the dataset.
+
+Metrics calculated:
+
+FACILITY_COUNT
+    How many warehouse locations this inventory has appeared in.
+
+FIRST_SEEN_DATE
+    Earliest known activity for this inventory.
+
+LAST_SEEN_DATE
+    Most recent activity.
+
+RECENCY_RANK
+    Orders every historical record from newest to oldest.
+    Rank = 1 represents the latest known transaction.
+==============================================================================*/
+RecordHistory AS (
+
+    SELECT
+
+        s.*,
+
+        COUNT(DISTINCT FACILITY_CODE)
+        OVER
+        (
+            PARTITION BY
+                RECEIPT_NUMBER,
+                ITEM_CODE,
+                PALLET_ID
+        ) AS FACILITY_COUNT,
+
+        MIN(ACTIVITY_DATE)
+        OVER
+        (
+            PARTITION BY
+                RECEIPT_NUMBER,
+                ITEM_CODE,
+                PALLET_ID
+        ) AS FIRST_SEEN_DATE,
+
+        MAX(ACTIVITY_DATE)
+        OVER
+        (
+            PARTITION BY
+                RECEIPT_NUMBER,
+                ITEM_CODE,
+                PALLET_ID
+        ) AS LAST_SEEN_DATE,
+
+        ROW_NUMBER()
+        OVER
+        (
+            PARTITION BY
+                RECEIPT_NUMBER,
+                ITEM_CODE,
+                PALLET_ID
+
+            ORDER BY
+                ACTIVITY_DATE DESC
+        ) AS RECENCY_RANK
+
+    FROM SourceData s
+
+),
+
+
+
+/*==============================================================================
+STEP 4
+Apply business validation rules.
+
+Every record is evaluated in priority order.
+
+Rule 1
+-------
+If the record exists in the verified reference dataset,
+classify it as VALID.
+
+Rule 2
+-------
+If the same inventory appears in multiple warehouse facilities,
+flag it as a potential ghost record.
+
+Rule 3
+-------
+If this is not the newest historical record,
+it represents stale history rather than current inventory.
+
+Rule 4
+-------
+Everything else should be reviewed manually.
+
+Using a CASE statement makes these business rules transparent and easy to
+modify as requirements evolve.
+==============================================================================*/
+Validation AS (
+
+    SELECT
+
+        h.*,
+
+        CASE
+
+            WHEN v.RECEIPT_NUMBER IS NOT NULL
+
+                THEN 'VALID'
+
+            WHEN h.FACILITY_COUNT > 1
+
+                THEN 'GHOST - MULTIPLE FACILITIES'
+
+            WHEN h.RECENCY_RANK > 1
+
+                THEN 'GHOST - STALE RECORD'
+
+            ELSE
+
+                'REVIEW'
+
+        END AS VALIDATION_STATUS
+
+    FROM RecordHistory h
+
+    LEFT JOIN VerifiedRecords v
+
+        ON h.RECEIPT_NUMBER = v.RECEIPT_NUMBER
+       AND h.ITEM_CODE = v.ITEM_CODE
+       AND h.PALLET_ID = v.PALLET_ID
+       AND h.FACILITY_CODE = v.FACILITY_CODE
+
+)
+
+
+
+/*==============================================================================
+FINAL RESULT
+
+Return every analyzed record together with its calculated metrics and final
+classification.
+
+Sorting by receipt, product, pallet, and newest activity reconstructs the
+chronological movement history for each inventory item.
+
+This output allows analysts to:
+
+• identify valid inventory
+• locate duplicate warehouse records
+• investigate stale historical records
+• audit the effectiveness of the validation logic
+==============================================================================*/
+
+SELECT *
+
+FROM Validation
+
+ORDER BY
+
+    RECEIPT_NUMBER,
+    ITEM_CODE,
+    PALLET_ID,
+    ACTIVITY_DATE DESC;
